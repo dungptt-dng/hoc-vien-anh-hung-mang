@@ -1,0 +1,50 @@
+rules_version = '2';
+// Luật bảo mật Firestore cho Học viện Anh hùng Mạng.
+// - Học sinh đăng nhập ẩn danh (không cần email), giáo viên đăng nhập bằng email.
+// - Chỉ giáo viên chủ lớp được sửa cài đặt lớp, duyệt sản phẩm, xóa dữ liệu.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function isTeacherAccount() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function ownsClass(code) { return signedIn() && get(/databases/$(db)/documents/classes/$(code)).data.teacherUid == request.auth.uid; }
+    // Học sinh chỉ được sửa các trường của chính hồ sơ học viên
+    function studentFieldsOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profile', 'results', 'plays', 'notebook', 'plan']);
+    }
+
+    match /classes/{code} {
+      allow get: if signedIn();
+      allow list: if isTeacherAccount() && resource.data.teacherUid == request.auth.uid;
+      allow create: if isTeacherAccount() && request.resource.data.teacherUid == request.auth.uid;
+      allow update, delete: if ownsClass(code);
+
+      match /students/{sid} {
+        allow get: if signedIn();
+        allow list: if ownsClass(code);
+        allow create, delete: if ownsClass(code);
+        allow update: if ownsClass(code) || (signedIn() && studentFieldsOnly());
+      }
+      match /creations/{id} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.status == 'pending'
+          && request.resource.data.message.size() <= 120 && request.resource.data.rule.size() <= 80;
+        allow update, delete: if ownsClass(code);
+      }
+    }
+
+    match /rooms/{pin} {
+      allow get: if signedIn();
+      allow create: if isTeacherAccount() && request.resource.data.hostUid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+      match /players/{pid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+      }
+      match /answers/{aid} {
+        allow read: if signedIn();
+        allow write: if signedIn();
+      }
+    }
+  }
+}

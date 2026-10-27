@@ -1,0 +1,8 @@
+# Tài liệu Word và tệp tạm của Office
+*.docx
+~$*
+
+# Cấu hình riêng của máy
+.claude/
+Thumbs.db
+desktop.ini
