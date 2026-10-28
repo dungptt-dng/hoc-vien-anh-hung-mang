@@ -7,6 +7,7 @@ import * as T from './teacher.js';
 import { registerSW } from './pwa.js';
 import { scene } from './art.js';
 import { initMusic } from './music.js';
+import { logLogin, flushLogs } from './log.js';
 
 document.body.prepend(scene());
 initMusic();
@@ -56,6 +57,8 @@ async function route() {
     mount(h('main', { class: 'wrap narrow' }, mentor('Không kết nối được máy chủ. Hãy kiểm tra mạng Internet rồi tải lại trang.'), h('p', { class: 'error' }, ex.message)));
     return;
   }
+  const s = S.session.get();
+  if (s?.name) logLogin(s.name, s.cls); else flushLogs();
   window.addEventListener('hashchange', route);
   route();
   registerSW();

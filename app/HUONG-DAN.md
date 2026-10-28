@@ -2,11 +2,37 @@
 
 App là một **web app cài được (PWA)**: mở bằng trình duyệt, sau đó cài lên điện thoại, máy tính bảng hoặc laptop như một ứng dụng thường. Không cần lên CH Play hay App Store.
 
+## Cách dùng nhanh: chỉ cần gửi link
+
+1. Gửi cho học sinh link: <https://dungptt-dng.github.io/hoc-vien-anh-hung-mang/>
+2. Học sinh mở link → **Em là học viên** → nhập **họ tên** và **lớp** → chọn nhân vật → vào học. Không cần mã lớp, không cần tài khoản.
+3. Tiến độ học của mỗi em được lưu ngay trên thiết bị em đang dùng. Một máy dùng chung vẫn được: em sau bấm **Đăng xuất** rồi nhập tên mình.
+4. **Lịch sử đăng nhập** (họ tên, lớp, thiết bị, thời gian) tự ghi vào Google Trang tính của giáo viên qua Google Form (cách tạo ở dưới). App ghi 1 dòng mỗi lần học sinh đăng nhập, và 1 dòng khi mở lại app (cách nhau ít nhất 30 phút).
+
+### Tạo Google Form để nhận lịch sử đăng nhập (khoảng 3 phút, làm 1 lần)
+1. Vào <https://forms.google.com> → **Trống** (Blank). Đặt tên, ví dụ `Lịch sử đăng nhập Học viện`.
+2. Tạo **4 câu hỏi kiểu "Trả lời ngắn"**, **đúng thứ tự**: `Họ tên`, `Lớp`, `Thiết bị`, `Thời gian`. Không bật "Bắt buộc".
+3. Tab **Cài đặt** (Settings):
+   - **Câu trả lời → Thu thập địa chỉ email**: chọn **Không thu thập**.
+   - **Câu trả lời → Giới hạn 1 câu trả lời**: **tắt**.
+   - Nếu dùng tài khoản Google của trường/công ty: tắt **Chỉ giới hạn ở người dùng trong …**. Nếu không tắt, lịch sử sẽ không ghi được.
+4. Tab **Câu trả lời** → **Liên kết với Trang tính** → **Tạo** để có Google Trang tính chứa lịch sử.
+5. Bấm **⋮** (góc trên bên phải) → **Lấy đường liên kết điền sẵn** (Get pre-filled link). Gõ chữ bất kỳ vào cả 4 ô, ví dụ `a`, `b`, `c`, `d` → **Lấy đường liên kết** → **Sao chép đường liên kết**.
+6. Dán đường liên kết đó vào `js/config.js`, giữa hai dấu nháy của dòng `export const loginFormLink = '';`. Đổi số phiên bản trong `sw.js` (ví dụ `hvahm-v3` thành `hvahm-v4`) rồi đưa app lên lại.
+
+> Lịch sử phát sinh trước khi dán link, hoặc khi máy mất mạng, được giữ lại trên máy và tự gửi bù khi có mạng và đã có link.
+
+> Khi chưa kết nối Firebase, các chức năng cần nhiều máy cùng lúc (phòng chơi bằng mã PIN, giáo viên duyệt sản phẩm và xem thống kê của cả lớp) không dùng được và đã được ẩn đi.
+
+---
+
+## Chế độ nâng cao (không bắt buộc)
+
 App có hai chế độ:
 
 | Chế độ | Khi nào | Dữ liệu lưu ở đâu |
 |---|---|---|
-| **Chạy thử** | `js/config.js` để trống `apiKey` (mặc định) | Ngay trên máy đang dùng. Các tab trên **cùng một máy** vẫn chơi chung phòng được. |
+| **Chỉ cần link** | `js/config.js` để trống `apiKey` (mặc định) | Tiến độ lưu trên máy đang dùng, lịch sử đăng nhập gửi về Google Trang tính. |
 | **Trực tuyến** | Đã dán cấu hình Firebase vào `js/config.js` | Trên Firebase. **Nhiều thiết bị** chơi cùng lúc, giáo viên xem thống kê từ bất kỳ máy nào. |
 
 ---

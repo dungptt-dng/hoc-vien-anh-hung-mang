@@ -5,6 +5,7 @@ import { h, mount, fill, mentor, speakBtn, sound, shields, toast, confetti, topb
 import { playChallenge } from './player.js';
 import { installButton } from './pwa.js';
 import { owl } from './art.js';
+import { logLogin } from './log.js';
 
 const SKEY = 'hvahm:session';
 export const session = {
@@ -43,41 +44,41 @@ export function welcome() {
         h('div', { class: 'hero-owl-art' }, owl('owl-big')),
         h('div', { class: 'hero-bubble' }, h('b', {}, 'Cú Thông Thái'), h('p', {}, greet), speakBtn(greet))),
       h('nav', { class: 'menu' },
-        menuBtn(s ? '#/map' : '#/login', s ? '🗺️' : '🎒', s ? 'Vào Học viện' : 'Em là học viên', s ? 'Tiếp tục hành trình của em' : 'Đăng nhập bằng mã lớp', '#7B2CBF'),
-        menuBtn('#/join', '🎮', 'Chơi cùng cả lớp', 'Nhập mã PIN thầy cô chiếu trên bảng', '#F72585'),
+        menuBtn(s ? '#/map' : '#/login', s ? '🗺️' : '🎒', s ? 'Vào Học viện' : 'Em là học viên', s ? `Tiếp tục hành trình của ${s.name || 'em'}` : 'Nhập họ tên và lớp để bắt đầu', '#7B2CBF'),
+        store.mode !== 'local' && menuBtn('#/join', '🎮', 'Chơi cùng cả lớp', 'Nhập mã PIN thầy cô chiếu trên bảng', '#F72585'),
         h('div', { class: 'menu-small' },
           h('a', { class: 'btn ghost sm', href: '#/teacher' }, '👩‍🏫 Dành cho giáo viên'),
-          installButton())),
-      store.mode === 'local' && h('p', { class: 'mode-note' }, '🧪 Chế độ chạy thử: dữ liệu lưu trên máy này. Kết nối Firebase để chơi trực tuyến trên nhiều thiết bị.')));
+          installButton()))));
 }
 
 // ---------------------------------------------------------------- Đăng nhập
 export function login() {
   const err = h('p', { class: 'error', hidden: true });
-  const cls = h('input', { id: 'cls', placeholder: 'Ví dụ: 5A-K7Q2', autocomplete: 'off', autocapitalize: 'characters', required: true });
-  const sid = h('input', { id: 'sid', placeholder: 'Ví dụ: 07', inputmode: 'numeric', autocomplete: 'off', required: true });
+  const name = h('input', { id: 'name', placeholder: 'Ví dụ: Nguyễn Văn An', autocomplete: 'off', maxlength: 40, required: true });
+  const cls = h('input', { id: 'cls', placeholder: 'Ví dụ: 5A', autocomplete: 'off', autocapitalize: 'characters', maxlength: 12, required: true });
   const go = h('button', { class: 'btn big', type: 'submit' }, 'Vào Học viện ▶');
   async function submit(e) {
     e.preventDefault();
     err.hidden = true; go.disabled = true;
-    const classCode = cls.value.trim().toUpperCase();
-    const code = sid.value.trim().padStart(2, '0');
+    const fullName = name.value.trim().replace(/\s+/g, ' ');
+    const className = cls.value.trim().toUpperCase().replace(/\s+/g, '');
     try {
-      const c = await store.getClass(classCode);
-      if (!c) throw new Error('Không tìm thấy mã lớp. Em hỏi lại thầy cô nhé!');
-      const me = await store.getStudent(classCode, code);
-      if (!me) throw new Error('Không tìm thấy mã học viên trong lớp này.');
-      session.set({ classCode, sid: code });
+      if (fullName.length < 2) throw new Error('Em nhập đầy đủ họ tên nhé!');
+      if (!/[A-Z0-9]/.test(className)) throw new Error('Em nhập tên lớp, ví dụ 5A nhé!');
+      const { classCode, sid } = await store.enterAcademy(fullName, className);
+      session.set({ classCode, sid, name: fullName, cls: className });
+      logLogin(fullName, className, true);
+      const me = await store.getStudent(classCode, sid);
       location.hash = me.profile ? '#/map' : '#/profile';
     } catch (ex) { err.textContent = ex.message; err.hidden = false; sound('bad'); }
     go.disabled = false;
   }
   mount(topbar('Đăng nhập', { back: '#/' }),
     h('main', { class: 'wrap narrow' },
-      mentor('Em nhập mã lớp và mã học viên mà thầy cô đã phát nhé. Em không cần nhập tên thật.'),
+      mentor('Em nhập họ tên và lớp của em để vào Học viện nhé. Trong trò chơi, các bạn sẽ gọi em bằng biệt danh.'),
       h('form', { class: 'card form', onsubmit: submit },
-        h('label', { for: 'cls' }, '🏫 Mã lớp'), cls,
-        h('label', { for: 'sid' }, '🎫 Mã học viên'), sid,
+        h('label', { for: 'name' }, '🧒 Họ và tên'), name,
+        h('label', { for: 'cls' }, '🏫 Lớp'), cls,
         err, go)));
 }
 
@@ -145,7 +146,7 @@ export async function map() {
         h('a', { class: 'tile', href: '#/notebook', style: { '--c': '#06D6A0' } }, '📒', h('b', {}, 'Sổ tay Anh hùng')),
         R.post && h('a', { class: 'tile', href: '#/studio', style: { '--c': '#F72585' } }, '🎨', h('b', {}, 'Xưởng sáng tạo')),
         h('a', { class: 'tile', href: '#/library', style: { '--c': '#4CC9F0' } }, '📚', h('b', {}, 'Thư viện của lớp')),
-        h('a', { class: 'tile', href: '#/join', style: { '--c': '#FB8500' } }, '🎮', h('b', {}, 'Chơi cùng lớp')),
+        store.mode !== 'local' && h('a', { class: 'tile', href: '#/join', style: { '--c': '#FB8500' } }, '🎮', h('b', {}, 'Chơi cùng lớp')),
         h('a', { class: 'tile', href: '#/profile', style: { '--c': '#B497D6' } }, '🎭', h('b', {}, 'Đổi nhân vật')),
         h('button', { class: 'tile', style: { '--c': '#8D99AE' }, onclick: () => { session.clear(); location.hash = '#/'; } }, '🚪', h('b', {}, 'Đăng xuất')))));
   requestAnimationFrame(() => drawRoad(document.querySelector('.journey')));

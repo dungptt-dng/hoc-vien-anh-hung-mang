@@ -10,3 +10,8 @@ export const firebaseConfig = {
   messagingSenderId: '',
   appId: '',
 };
+
+// Lịch sử đăng nhập của học viên: dán "đường liên kết điền sẵn" của Google Form vào đây
+// (xem HUONG-DAN.md, mục "Lịch sử đăng nhập"). Form có 4 câu Trả lời ngắn theo đúng thứ tự:
+// Họ tên, Lớp, Thiết bị, Thời gian. Để trống thì app vẫn chạy, lịch sử được giữ trên máy và gửi bù sau.
+export const loginFormLink = '';

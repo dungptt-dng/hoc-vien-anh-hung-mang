@@ -87,6 +87,17 @@ class LocalStore {
   async deleteClass(code) { this.write(db => { delete db.classes[code]; }); }
 
   // Học sinh
+  // Vào học viện chỉ bằng họ tên + lớp: tự tạo lớp và hồ sơ học viên trên máy này nếu chưa có
+  async enterAcademy(name, className) {
+    const code = slug(className);
+    const sid = name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'hv';
+    this.write(db => {
+      const c = db.classes[code] ??= { code, name: className, type: 'thucnghiem', teacherUid: 'local', maxOpen: 8, freeOrder: false, createdAt: Date.now(), students: {}, creations: {} };
+      c.students[sid] ??= { code: sid, name, results: {}, notebook: [], plays: {} };
+    });
+    return { classCode: code, sid };
+  }
   async getStudent(classCode, sid) { return this.read().classes[classCode]?.students?.[sid] || null; }
   async updateStudent(classCode, sid, patch) {
     this.write(db => {

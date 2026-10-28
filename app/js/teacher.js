@@ -36,7 +36,7 @@ export async function teacherHome() {
     h('main', { class: 'wrap' },
       h('p', { class: 'muted' }, 'Đăng nhập: ', t.email),
       h('div', { class: 'tiles' },
-        h('a', { class: 'tile', href: '#/host-new' }, '🎮', h('b', {}, 'Mở phòng chơi trực tuyến')),
+        store.mode !== 'local' && h('a', { class: 'tile', href: '#/host-new' }, '🎮', h('b', {}, 'Mở phòng chơi trực tuyến')),
         h('a', { class: 'tile', href: '#/teacher/compare' }, '📊', h('b', {}, 'So sánh các lớp')),
         h('a', { class: 'tile', href: '#/teacher/consent' }, '📝', h('b', {}, 'Phiếu đồng ý phụ huynh'))),
       h('h2', {}, 'Lớp của tôi'),
@@ -55,7 +55,7 @@ function teacherLogin() {
   const err = h('p', { class: 'error', hidden: true });
   if (store.mode === 'local') {
     return mount(topbar('👩‍🏫 Giáo viên', { back: '#/' }), h('main', { class: 'wrap narrow' },
-      mentor('App đang ở chế độ chạy thử: không cần tài khoản. Khi kết nối Firebase, giáo viên sẽ đăng nhập bằng email và mật khẩu.'),
+      mentor('Trang này chỉ có dữ liệu của học viên đã chơi trên máy này. Lịch sử đăng nhập của cả lớp, thầy cô xem trong Google Trang tính nối với Google Form.'),
       h('div', { class: 'actions' }, h('button', { class: 'btn big', onclick: async () => { await store.teacherSignIn(); teacherHome(); } }, 'Vào trang giáo viên ▶'))));
   }
   const email = h('input', { type: 'email', placeholder: 'email@truong.edu.vn', required: true, autocomplete: 'username' });
@@ -100,7 +100,7 @@ function tabStudents(cls, students) {
   return h('div', { class: 'card scroll-x' }, h('table', { class: 'tbl' },
     h('tr', {}, h('th', {}, 'Mã'), h('th', {}, 'Biệt danh'), h('th', {}, 'Nhập học'), CHALLENGES.map(c => h('th', { title: c.title }, c.icon)), h('th', {}, 'Tốt nghiệp')),
     students.map(s => h('tr', {},
-      h('td', {}, h('b', {}, s.code)),
+      h('td', {}, h('b', {}, s.name || s.code)),
       h('td', {}, s.profile ? [avatarEl(s.profile, 'sm'), ' ', nickname(s.profile)] : h('span', { class: 'muted' }, 'Chưa vào')),
       h('td', {}, s.results?.pre ? `✅ ${Math.round(safeShare(s.results.pre.answers) * 8)}/8` : '–'),
       CHALLENGES.map(c => h('td', {}, s.results?.[c.id] ? [shields(s.results[c.id].shields), h('br'), h('small', { class: 'muted' }, `${Math.round(s.results[c.id].ms / 60000)}′ · ${s.plays?.[c.id] || 1} lượt`)] : '–')),

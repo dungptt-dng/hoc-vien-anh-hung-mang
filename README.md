@@ -11,4 +11,4 @@ Trò chơi luyện kỹ năng an toàn trên mạng cho học sinh lớp 5. Họ
 
 Mã nguồn nằm trong thư mục [`app/`](app/). Hướng dẫn cài đặt, kết nối Firebase và dùng trên lớp: [`app/HUONG-DAN.md`](app/HUONG-DAN.md).
 
-> Khi chưa kết nối Firebase, app chạy ở chế độ chạy thử: dữ liệu chỉ lưu trên thiết bị đang dùng.
+> Học sinh chỉ cần mở link, nhập họ tên và lớp là vào học. Tiến độ lưu trên thiết bị đang dùng; lịch sử đăng nhập gửi về Google Trang tính của giáo viên qua Google Form (xem hướng dẫn).
