@@ -32,7 +32,9 @@ export function playChallenge(ch, ctx, { onDone, onExit }) {
 
   function intro() {
     frame(
-      h('div', { class: 'room-hero' }, h('div', { class: 'room-icon' }, ch.icon), h('h2', {}, `Thử thách ${ch.no}`), h('p', { class: 'muted' }, ch.room)),
+      h('div', { class: 'room-hero' },
+        h('div', { class: 'rays-wrap' }, h('div', { class: 'rays' }), h('div', { class: 'room-icon' }, ch.icon)),
+        h('div', { class: 'ribbon' }, `Thử thách ${ch.no}`), h('h2', {}, ch.room), h('p', { class: 'muted' }, ch.title)),
       mentor(f(ch.intro)),
       h('div', { class: 'actions' }, h('button', { class: 'btn big', onclick: () => screen(0) }, 'Bắt đầu ▶')));
   }
@@ -62,7 +64,7 @@ export function playChallenge(ch, ctx, { onDone, onExit }) {
       panel.hidden = false;
       panel.className = `result-panel ${lv.cls}`;
       panel.replaceChildren(
-        h('div', { class: 'lv-tag' }, lv.icon, ' ', lv.label),
+        h('div', { class: 'result-head' }, h('span', { class: 'result-ic' }, lv.icon), h('span', { class: 'lv-tag' }, lv.label)),
         h('p', { class: 'consequence' }, f(c.result), speakBtn(f(c.result) + '. ' + f(s.explain))),
         h('div', { class: 'explain' }, h('b', {}, '🦉 Cú Thông Thái: '), f(s.explain)),
         h('div', { class: 'actions' },
@@ -159,7 +161,7 @@ export function playChallenge(ch, ctx, { onDone, onExit }) {
       sound('win'); confetti();
       frame(
         h('div', { class: 'badge-win' },
-          h('div', { class: 'badge-icon' }, ch.icon),
+          h('div', { class: 'rays-wrap big' }, h('div', { class: 'rays gold' }), h('div', { class: 'medal', style: { '--c': ch.color } }, h('span', { class: 'badge-icon' }, ch.icon))),
           h('h2', {}, 'Huy hiệu: ', ch.badge),
           shields(sc.shields),
           h('p', {}, sc.shields === 3 ? 'Xuất sắc! Em xử lý rất an toàn.' : sc.shields === 2 ? 'Tốt lắm! Em đã gần như hoàn hảo.' : 'Em đã hoàn thành! Chơi lại để luyện thêm nhé.'),

@@ -5,6 +5,11 @@ import * as S from './student.js';
 import * as L from './live.js';
 import * as T from './teacher.js';
 import { registerSW } from './pwa.js';
+import { scene } from './art.js';
+import { initMusic } from './music.js';
+
+document.body.prepend(scene());
+initMusic();
 
 const routes = [
   [/^#?\/?$/, () => S.welcome()],

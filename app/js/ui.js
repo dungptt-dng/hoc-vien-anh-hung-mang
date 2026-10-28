@@ -1,5 +1,7 @@
 // Tiện ích giao diện dùng chung
 import { MENTOR, AVATARS } from './content.js';
+import { owl } from './art.js';
+import { audioCtx, sfxOut, duck, toggleMusic, musicOn, onMusicChange } from './music.js';
 
 export function h(tag, attrs = {}, ...kids) {
   const el = document.createElement(tag);
@@ -7,7 +9,9 @@ export function h(tag, attrs = {}, ...kids) {
     if (v == null || v === false) continue;
     if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
     else if (k === 'class') el.className = v;
-    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k === 'style' && typeof v === 'object') {
+      for (const [p, val] of Object.entries(v)) p.startsWith('--') ? el.style.setProperty(p, val) : (el.style[p] = val);
+    }
     else if (k === 'html') el.innerHTML = v;
     else el.setAttribute(k, v === true ? '' : v);
   }
@@ -46,24 +50,27 @@ export function speak(text) {
   const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ''));
   u.lang = 'vi-VN'; u.rate = 0.95;
   if (viVoice) u.voice = viVoice;
+  u.onend = u.onerror = () => duck(false);
+  duck(true);
   speechSynthesis.speak(u);
 }
-export function stopSpeak() { if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+export function stopSpeak() { if ('speechSynthesis' in window) speechSynthesis.cancel(); duck(false); }
 export const speakBtn = text => h('button', { class: 'speak', title: 'Nghe đọc', 'aria-label': 'Nghe đọc', onclick: e => { e.stopPropagation(); speak(typeof text === 'function' ? text() : text); } }, '🔊');
 
 // ---- Âm thanh ngắn (tạo bằng WebAudio, không cần tệp)
-let actx;
 export function sound(kind) {
   if (localStorage.getItem('hvahm:mute') === '1') return;
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const actx = audioCtx();
+    if (!actx) return;
+    actx.resume();
     const notes = { good: [523, 659, 784], ok: [440, 523], bad: [330, 262], tap: [660], win: [523, 659, 784, 1047] }[kind] || [440];
     notes.forEach((f, i) => {
       const o = actx.createOscillator(), g = actx.createGain();
       o.type = 'triangle'; o.frequency.value = f;
       const t = actx.currentTime + i * 0.12;
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
-      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.3);
+      o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.3);
     });
   } catch { /* không có âm thanh cũng không sao */ }
 }
@@ -87,7 +94,7 @@ export function confetti() {
 // Lời của Cú Thông Thái
 export function mentor(text, extra) {
   return h('div', { class: 'mentor' },
-    h('div', { class: 'mentor-ava', 'aria-hidden': 'true' }, MENTOR.emoji),
+    h('div', { class: 'mentor-ava' }, owl()),
     h('div', { class: 'bubble' }, h('b', {}, MENTOR.name), h('p', {}, text), speakBtn(text), extra));
 }
 
@@ -148,18 +155,33 @@ function block(b, f) {
   }
 }
 
-export function spinner(text = 'Đang tải…') { return h('div', { class: 'center pad' }, h('div', { class: 'spin' }, '🦉'), h('p', {}, text)); }
+export function spinner(text = 'Đang tải…') { return h('div', { class: 'center pad' }, h('div', { class: 'spin' }, owl()), h('p', { class: 'spin-text' }, text)); }
 
 export function topbar(title, opts = {}) {
   return h('header', { class: 'topbar' },
-    opts.back ? h('a', { class: 'btn ghost sm', href: opts.back }, '⬅ ', opts.backLabel || 'Quay lại') : h('span'),
+    opts.back ? h('a', { class: 'btn ghost sm back', href: opts.back }, '⬅ ', h('span', { class: 'hide-xs' }, opts.backLabel || 'Quay lại')) : h('span'),
     h('h1', {}, title),
-    h('span', { class: 'top-right' }, opts.right || muteBtn()));
+    h('span', { class: 'top-right' }, opts.right, audioBtns()));
 }
-export function muteBtn() {
-  const on = () => localStorage.getItem('hvahm:mute') !== '1';
-  const b = h('button', { class: 'btn ghost sm', title: 'Bật/tắt âm thanh', onclick: () => { localStorage.setItem('hvahm:mute', on() ? '1' : '0'); b.textContent = on() ? '🔈' : '🔇'; } }, on() ? '🔈' : '🔇');
-  return b;
+
+// Hai nút: nhạc nền 🎵 và hiệu ứng âm thanh 🔈
+export function audioBtns() {
+  const sfxOn = () => localStorage.getItem('hvahm:mute') !== '1';
+  const music = h('button', { class: 'icon-btn', onclick: e => { e.stopPropagation(); toggleMusic(); } });
+  const drawMusic = () => {
+    music.classList.toggle('off', !musicOn());
+    music.title = musicOn() ? 'Tắt nhạc nền' : 'Bật nhạc nền';
+    music.setAttribute('aria-label', music.title);
+    music.textContent = '🎵';
+  };
+  drawMusic();
+  const off = onMusicChange(drawMusic);
+  new MutationObserver((_, obs) => { if (!music.isConnected) { off(); obs.disconnect(); } }).observe(document.body, { childList: true, subtree: true });
+  const sfx = h('button', {
+    class: `icon-btn ${sfxOn() ? '' : 'off'}`, title: 'Bật/tắt hiệu ứng âm thanh', 'aria-label': 'Bật/tắt hiệu ứng âm thanh',
+    onclick: e => { e.stopPropagation(); localStorage.setItem('hvahm:mute', sfxOn() ? '1' : '0'); sfx.classList.toggle('off', !sfxOn()); sfx.textContent = sfxOn() ? '🔈' : '🔇'; },
+  }, sfxOn() ? '🔈' : '🔇');
+  return h('span', { class: 'audio-btns' }, music, sfx);
 }
 
 // Kiểm tra từ ngữ không phù hợp

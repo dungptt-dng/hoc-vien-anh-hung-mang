@@ -1,9 +1,10 @@
 // Các màn hình của học sinh: chào, đăng nhập, chọn nhân vật, bản đồ, khảo sát, tốt nghiệp, sổ tay, xưởng sáng tạo, thư viện
 import { store } from './store.js';
 import { AVATARS, ADJECTIVES, COLORS, CHALLENGES, SURVEYS, BAD_WORDS } from './content.js';
-import { h, mount, fill, mentor, speakBtn, sound, shields, toast, confetti, topbar, avatarEl, avatarEmoji, animalName, shuffle, spinner, hasBadWord, LEVEL, phone } from './ui.js';
+import { h, mount, fill, mentor, speakBtn, sound, shields, toast, confetti, topbar, avatarEl, avatarEmoji, animalName, shuffle, spinner, hasBadWord, LEVEL, phone, audioBtns } from './ui.js';
 import { playChallenge } from './player.js';
 import { installButton } from './pwa.js';
+import { owl } from './art.js';
 
 const SKEY = 'hvahm:session';
 export const session = {
@@ -24,17 +25,29 @@ async function loadMe() {
 }
 
 // ---------------------------------------------------------------- Chào
+const word = (text, cls) => h('span', { class: cls }, text.split(' ').map((w, i) => h('span', { class: 'wobble', style: { animationDelay: `${i * 0.15}s` } }, w)));
+
 export function welcome() {
   const s = session.get();
+  const greet = 'Chào mừng em đến Học viện! Đây là trò chơi luyện tập. Mọi nhân vật trong trò chơi đều là nhân vật giả, nên em cứ yên tâm thử sức nhé!';
+  const menuBtn = (href, icon, title, sub, color) => h('a', { class: 'menu-btn', href, style: { '--c': color } },
+    h('span', { class: 'menu-ic' }, icon), h('span', { class: 'menu-tx' }, h('b', {}, title), h('small', {}, sub)), h('span', { class: 'menu-go' }, '▶'));
   mount(
+    h('header', { class: 'topbar clear' }, h('span'), h('span'), h('span', { class: 'top-right' }, audioBtns())),
     h('main', { class: 'wrap welcome' },
-      h('div', { class: 'logo' }, h('div', { class: 'logo-shield' }, '🛡️'), h('h1', {}, 'Học viện', h('br'), 'Anh hùng Mạng'), h('p', {}, 'Luyện kỹ năng an toàn trên mạng cho học sinh lớp 5')),
-      mentor('Chào mừng em đến Học viện! Đây là trò chơi luyện tập. Mọi nhân vật trong trò chơi đều là nhân vật giả, nên em cứ yên tâm thử sức nhé!'),
-      h('div', { class: 'menu' },
-        h('a', { class: 'btn big', href: s ? '#/map' : '#/login' }, s ? '🗺️ Vào Học viện' : '🎒 Em là học viên'),
-        h('a', { class: 'btn big alt', href: '#/join' }, '🎮 Vào phòng chơi cùng lớp'),
-        h('a', { class: 'btn ghost', href: '#/teacher' }, '👩‍🏫 Dành cho giáo viên'),
-        installButton()),
+      h('div', { class: 'title-wrap' },
+        h('div', { class: 'title-badge' }, '🛡️'),
+        h('h1', { class: 'title' }, word('Học viện', 't1'), word('Anh hùng Mạng', 't2')),
+        h('p', { class: 'tagline' }, '✨ Cùng luyện kỹ năng an toàn trên mạng ✨')),
+      h('div', { class: 'hero-owl' },
+        h('div', { class: 'hero-owl-art' }, owl('owl-big')),
+        h('div', { class: 'hero-bubble' }, h('b', {}, 'Cú Thông Thái'), h('p', {}, greet), speakBtn(greet))),
+      h('nav', { class: 'menu' },
+        menuBtn(s ? '#/map' : '#/login', s ? '🗺️' : '🎒', s ? 'Vào Học viện' : 'Em là học viên', s ? 'Tiếp tục hành trình của em' : 'Đăng nhập bằng mã lớp', '#7B2CBF'),
+        menuBtn('#/join', '🎮', 'Chơi cùng cả lớp', 'Nhập mã PIN thầy cô chiếu trên bảng', '#F72585'),
+        h('div', { class: 'menu-small' },
+          h('a', { class: 'btn ghost sm', href: '#/teacher' }, '👩‍🏫 Dành cho giáo viên'),
+          installButton())),
       store.mode === 'local' && h('p', { class: 'mode-note' }, '🧪 Chế độ chạy thử: dữ liệu lưu trên máy này. Kết nối Firebase để chơi trực tuyến trên nhiều thiết bị.')));
 }
 
@@ -116,14 +129,6 @@ export async function map() {
   const doneCount = CHALLENGES.filter(c => R[c.id]).length;
   const todayCount = +sessionStorage.getItem('hvahm:today') || 0;
 
-  const rooms = CHALLENGES.map(c => {
-    const ok = isAvailable(c.no, cls, me);
-    const r = R[c.id];
-    return h(ok ? 'a' : 'div', { class: `room ${ok ? '' : 'locked'} ${r ? 'done' : ''}`, href: ok ? `#/c/${c.id}` : null, style: { '--c': c.color } },
-      h('span', { class: 'room-no' }, c.no), h('span', { class: 'room-ic' }, ok ? c.icon : '🔒'),
-      h('b', {}, c.room), h('small', {}, c.title), r ? shields(r.shields) : ok ? h('small', { class: 'go' }, 'Vào phòng ▶') : h('small', {}, 'Chưa mở'));
-  });
-
   let say = 'Hãy làm Nhiệm vụ nhập học để mở cửa Học viện nhé!';
   if (R.pre) say = doneCount < 8 ? `Em đã có ${doneCount}/8 mảnh Lá chắn. Cố lên!` : R.post ? 'Chúc mừng Anh hùng Mạng! Ghé Xưởng sáng tạo để làm sản phẩm của em nhé.' : 'Em đã có đủ 8 mảnh! Hãy làm Kỳ thi tốt nghiệp.';
   if (todayCount >= 2) say += ' Hôm nay em đã học 2 thử thách rồi, nghỉ ngơi một chút cũng rất tốt đấy!';
@@ -131,18 +136,65 @@ export async function map() {
   mount(
     topbar('Bản đồ Học viện', { back: '#/', backLabel: 'Trang đầu', right: h('span', { class: 'who' }, avatarEl(me.profile, 'sm'), h('span', { class: 'hide-sm' }, nickname(me.profile))) }),
     h('main', { class: 'wrap' },
-      h('div', { class: 'map-head' }, shieldArt(me, 'lg'), mentor(say)),
-      !R.pre && h('a', { class: 'quest', href: '#/survey/pre' }, h('span', {}, '📜'), h('div', {}, h('b', {}, 'Nhiệm vụ nhập học'), h('small', {}, '8 tình huống ngắn để bắt đầu')), h('span', { class: 'go' }, '▶')),
-      h('div', { class: 'rooms' }, rooms),
-      doneCount === 8 && !R.post && h('a', { class: 'quest gold', href: '#/survey/post' }, h('span', {}, '🎓'), h('div', {}, h('b', {}, 'Kỳ thi tốt nghiệp'), h('small', {}, '8 tình huống cuối cùng')), h('span', { class: 'go' }, '▶')),
+      h('div', { class: 'map-head' },
+        h('div', { class: 'shield-box' }, shieldArt(me, 'lg'), h('b', {}, `${doneCount}/8 mảnh`)),
+        mentor(say)),
+      journey(cls, me),
       h('div', { class: 'tiles' },
-        R.post && h('a', { class: 'tile', href: '#/graduate' }, '🎓', h('b', {}, 'Giấy chứng nhận')),
-        h('a', { class: 'tile', href: '#/notebook' }, '📒', h('b', {}, 'Sổ tay Anh hùng')),
-        R.post && h('a', { class: 'tile', href: '#/studio' }, '🎨', h('b', {}, 'Xưởng sáng tạo')),
-        h('a', { class: 'tile', href: '#/library' }, '📚', h('b', {}, 'Thư viện của lớp')),
-        h('a', { class: 'tile', href: '#/join' }, '🎮', h('b', {}, 'Chơi cùng lớp')),
-        h('a', { class: 'tile', href: '#/profile' }, '🎭', h('b', {}, 'Đổi nhân vật')),
-        h('button', { class: 'tile', onclick: () => { session.clear(); location.hash = '#/'; } }, '🚪', h('b', {}, 'Đăng xuất')))));
+        R.post && h('a', { class: 'tile', href: '#/graduate', style: { '--c': '#FFB703' } }, '🎓', h('b', {}, 'Giấy chứng nhận')),
+        h('a', { class: 'tile', href: '#/notebook', style: { '--c': '#06D6A0' } }, '📒', h('b', {}, 'Sổ tay Anh hùng')),
+        R.post && h('a', { class: 'tile', href: '#/studio', style: { '--c': '#F72585' } }, '🎨', h('b', {}, 'Xưởng sáng tạo')),
+        h('a', { class: 'tile', href: '#/library', style: { '--c': '#4CC9F0' } }, '📚', h('b', {}, 'Thư viện của lớp')),
+        h('a', { class: 'tile', href: '#/join', style: { '--c': '#FB8500' } }, '🎮', h('b', {}, 'Chơi cùng lớp')),
+        h('a', { class: 'tile', href: '#/profile', style: { '--c': '#B497D6' } }, '🎭', h('b', {}, 'Đổi nhân vật')),
+        h('button', { class: 'tile', style: { '--c': '#8D99AE' }, onclick: () => { session.clear(); location.hash = '#/'; } }, '🚪', h('b', {}, 'Đăng xuất')))));
+  requestAnimationFrame(() => drawRoad(document.querySelector('.journey')));
+}
+
+// Con đường phiêu lưu: Nhập học → 8 phòng → Tốt nghiệp, nối bằng đường cong
+function journey(cls, me) {
+  const R = me.results || {};
+  const allDone = CHALLENGES.every(c => R[c.id]);
+  const stops = [
+    { icon: '📜', title: 'Nhập học', sub: 'Nhiệm vụ đầu tiên', color: '#FF9F1C', href: R.pre ? null : '#/survey/pre', open: !R.pre, done: !!R.pre },
+    ...CHALLENGES.map(c => ({ no: c.no, icon: c.icon, title: c.room, sub: c.title, color: c.color, href: `#/c/${c.id}`, open: isAvailable(c.no, cls, me), done: !!R[c.id], shields: R[c.id]?.shields })),
+    { icon: '🎓', title: 'Tốt nghiệp', sub: R.post ? 'Xem giấy chứng nhận' : 'Kỳ thi cuối cùng', color: '#FFB703', href: R.post ? '#/graduate' : '#/survey/post', open: allDone, done: !!R.post },
+  ];
+  const cur = stops.findIndex(s => s.open && !s.done);
+  const XS = [50, 80, 50, 20];
+  const box = h('div', { class: 'journey' }, stops.map((s, i) => {
+    const state = s.done ? 'done' : s.open ? 'open' : 'locked';
+    return h(s.open || (s.done && s.href) ? 'a' : 'div', {
+      class: `stop ${state} ${i === cur ? 'current' : ''}`, href: s.open || s.done ? s.href : null,
+      style: { '--x': XS[i % 4] + '%', '--c': s.color, animationDelay: `${i * 0.06}s` },
+    },
+      i === cur && h('span', { class: 'here' }, avatarEl(me.profile, 'sm'), 'Em ở đây'),
+      h('span', { class: 'stop-dot' }, h('span', { class: 'stop-ic' }, state === 'locked' ? '🔒' : s.icon), s.no && h('span', { class: 'stop-no' }, s.no), s.done && h('span', { class: 'stop-ok' }, '✓')),
+      h('span', { class: 'stop-label' }, h('b', {}, s.title), h('small', {}, s.sub), s.shields ? shields(s.shields) : null));
+  }));
+  const ro = new ResizeObserver(() => drawRoad(box));
+  ro.observe(box);
+  return box;
+}
+
+function drawRoad(box) {
+  if (!box?.isConnected) return;
+  const b = box.getBoundingClientRect();
+  const stops = [...box.querySelectorAll('.stop')];
+  const pts = stops.map(s => { const r = s.querySelector('.stop-dot').getBoundingClientRect(); return [r.left - b.left + r.width / 2, r.top - b.top + r.height / 2]; });
+  const seg = (i) => {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], ym = (y0 + y1) / 2;
+    return `M${x0} ${y0} C${x0} ${ym} ${x1} ${ym} ${x1} ${y1}`;
+  };
+  const paths = pts.slice(0, -1).map((_, i) => {
+    const done = stops[i].classList.contains('done');
+    return `<path class="road-base" d="${seg(i)}"/><path class="road-line ${done ? 'done' : ''}" d="${seg(i)}"/>`;
+  }).join('');
+  let svg = box.querySelector('svg.road');
+  if (!svg) { svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'road'); svg.setAttribute('aria-hidden', 'true'); box.prepend(svg); }
+  svg.setAttribute('viewBox', `0 0 ${b.width} ${b.height}`);
+  svg.setAttribute('width', b.width); svg.setAttribute('height', b.height);
+  svg.innerHTML = paths;
 }
 
 // ---------------------------------------------------------------- Thử thách
@@ -242,7 +294,7 @@ export async function graduate() {
           shieldArt(me, 'md'),
           h('p', { class: 'cert-title' }, '🛡️ ANH HÙNG MẠNG 🛡️'),
           h('p', { class: 'muted' }, `Ngày ${date}`),
-          h('div', { class: 'cert-sign' }, h('span', {}, '🦉'), h('small', {}, 'Cú Thông Thái – Hiệu trưởng')))),
+          h('div', { class: 'cert-sign' }, owl('owl-sign'), h('small', {}, 'Cú Thông Thái – Hiệu trưởng')))),
       h('div', { class: 'actions no-print' },
         h('button', { class: 'btn', onclick: () => window.print() }, '🖨️ In giấy chứng nhận'),
         h('a', { class: 'btn alt', href: '#/studio' }, '🎨 Đến Xưởng sáng tạo'))));

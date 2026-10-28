@@ -3,6 +3,7 @@ import { store } from './store.js';
 import { AVATARS, ADJECTIVES, COLORS, CHALLENGES, TEAMS } from './content.js';
 import { h, mount, fill, mentor, phone, speakBtn, sound, toast, confetti, topbar, avatarEl, shuffle, spinner, LEVEL } from './ui.js';
 import { session, nickname } from './student.js';
+import { owl } from './art.js';
 
 const liveScreens = ch => ch.screens.filter(s => s.type === 'choice');
 const pKey = pin => `hvahm:live:${pin}`;
@@ -98,7 +99,7 @@ export function play(pin) {
 
     if (room.phase === 'lobby') {
       return mount(head, h('main', { class: 'wrap narrow center' },
-        h('div', { class: 'waiting' }, h('div', { class: 'spin' }, '🦉'), h('h2', {}, 'Em đã vào phòng!'), h('p', {}, 'Chờ thầy cô bắt đầu nhé…'), h('p', { class: 'muted' }, `${players.length} bạn đã vào phòng`)),
+        h('div', { class: 'waiting' }, h('div', { class: 'spin' }, owl()), h('h2', {}, 'Em đã vào phòng!'), h('p', {}, 'Chờ thầy cô bắt đầu nhé…'), h('p', { class: 'muted' }, `${players.length} bạn đã vào phòng`)),
         myInfo && h('div', { class: 'card' }, avatarEl(myInfo, 'lg'), h('h3', {}, myInfo.nickname), myInfo.team && h('p', {}, teamOf(myInfo.team).emoji, ' ', teamOf(myInfo.team).name))));
     }
     if (room.phase === 'end') {

@@ -94,6 +94,8 @@ Sau khi cài, app có biểu tượng 🛡️ riêng, mở toàn màn hình. Gia
 8. **Phân tích:** tab **Thống kê** (trước – sau theo chủ đề, từng thử thách, lựa chọn sai phổ biến), trang **So sánh các lớp**, và nút **Xuất Excel (CSV)**.
 9. **Kết thúc:** xuất dữ liệu, rồi **Cài đặt → Xóa dữ liệu học sinh**.
 
+**Âm thanh:** app có nhạc nền hộp nhạc nhẹ nhàng, bắt đầu sau lần chạm đầu tiên (trình duyệt không cho tự phát nhạc trước đó). Nút **🎵** ở góc trên bật/tắt nhạc nền, nút **🔈** bật/tắt hiệu ứng âm thanh. Mỗi thiết bị nhớ lựa chọn riêng. Khi bấm nghe đọc 🔊, nhạc tự nhỏ lại. Khi cả lớp cùng chơi trên nhiều máy, giáo viên có thể dặn học sinh tắt 🎵 để lớp đỡ ồn.
+
 **Lưu ý về thống kê:**
 - Mỗi thử thách chỉ ghi nhận **lần chơi đầu tiên**. Các lần chơi lại chỉ để luyện tập và được đếm vào "số lượt".
 - Kết quả trong **phòng chơi trực tuyến** chỉ dùng để thảo luận tại lớp, không gộp vào thống kê trước – sau.
