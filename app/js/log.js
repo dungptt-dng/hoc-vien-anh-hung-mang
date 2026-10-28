@@ -9,7 +9,7 @@ function target() {
   try {
     const u = new URL(loginFormLink);
     const ids = [...u.searchParams.keys()].filter(k => k.startsWith('entry.'));
-    if (ids.length < 4) return null;
+    if (ids.length < 2) return null;
     return { action: u.origin + u.pathname.replace(/\/viewform$/, '/formResponse'), ids };
   } catch { return null; }
 }
@@ -36,7 +36,8 @@ export async function flushLogs() {
   try {
     while (readQ().length) {
       const body = new URLSearchParams();
-      readQ()[0].forEach((v, i) => body.append(t.ids[i], v));
+      // Form chỉ có Họ tên, Lớp thì gửi 2 ô đầu (thời gian đã có ở cột Dấu thời gian của Trang tính)
+      t.ids.forEach((id, i) => body.append(id, readQ()[0][i] ?? ''));
       await fetch(t.action, { method: 'POST', mode: 'no-cors', body });
       saveQ(readQ().slice(1));
     }

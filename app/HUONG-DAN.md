@@ -11,13 +11,13 @@ App là một **web app cài được (PWA)**: mở bằng trình duyệt, sau �
 
 ### Tạo Google Form để nhận lịch sử đăng nhập (khoảng 3 phút, làm 1 lần)
 1. Vào <https://forms.google.com> → **Trống** (Blank). Đặt tên, ví dụ `Lịch sử đăng nhập Học viện`.
-2. Tạo **4 câu hỏi kiểu "Trả lời ngắn"**, **đúng thứ tự**: `Họ tên`, `Lớp`, `Thiết bị`, `Thời gian`. Không bật "Bắt buộc".
+2. Tạo các câu hỏi kiểu **"Trả lời ngắn"**, **đúng thứ tự**: `Họ tên`, `Lớp` (bắt buộc phải có), rồi nếu muốn thêm `Thiết bị`, `Thời gian`. Không bật "Bắt buộc". Thời gian gửi đã có sẵn ở cột *Dấu thời gian* của Trang tính.
 3. Tab **Cài đặt** (Settings):
    - **Câu trả lời → Thu thập địa chỉ email**: chọn **Không thu thập**.
    - **Câu trả lời → Giới hạn 1 câu trả lời**: **tắt**.
    - Nếu dùng tài khoản Google của trường/công ty: tắt **Chỉ giới hạn ở người dùng trong …**. Nếu không tắt, lịch sử sẽ không ghi được.
 4. Tab **Câu trả lời** → **Liên kết với Trang tính** → **Tạo** để có Google Trang tính chứa lịch sử.
-5. Bấm **⋮** (góc trên bên phải) → **Lấy đường liên kết điền sẵn** (Get pre-filled link). Gõ chữ bất kỳ vào cả 4 ô, ví dụ `a`, `b`, `c`, `d` → **Lấy đường liên kết** → **Sao chép đường liên kết**.
+5. Bấm **⋮** (góc trên bên phải) → **Lấy đường liên kết điền sẵn** (Get pre-filled link). Gõ chữ bất kỳ vào tất cả các ô, ví dụ `a`, `b`, … → **Lấy đường liên kết** → **Sao chép đường liên kết**.
 6. Dán đường liên kết đó vào `js/config.js`, giữa hai dấu nháy của dòng `export const loginFormLink = '';`. Đổi số phiên bản trong `sw.js` (ví dụ `hvahm-v3` thành `hvahm-v4`) rồi đưa app lên lại.
 
 > Lịch sử phát sinh trước khi dán link, hoặc khi máy mất mạng, được giữ lại trên máy và tự gửi bù khi có mạng và đã có link.

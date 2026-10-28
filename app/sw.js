@@ -1,6 +1,6 @@
 // Service worker: lưu sẵn giao diện để app mở nhanh và chạy được khi mạng yếu.
 // Đổi VERSION mỗi khi cập nhật app để thiết bị tải bản mới.
-const VERSION = 'hvahm-v3';
+const VERSION = 'hvahm-v4';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
   './js/main.js', './js/config.js', './js/store.js', './js/content.js', './js/ui.js', './js/player.js', './js/art.js', './js/music.js',
