@@ -48,7 +48,10 @@ export function welcome() {
         store.mode !== 'local' && menuBtn('#/join', '🎮', 'Chơi cùng cả lớp', 'Nhập mã PIN thầy cô chiếu trên bảng', '#F72585'),
         h('div', { class: 'menu-small' },
           h('a', { class: 'btn ghost sm', href: '#/teacher' }, '👩‍🏫 Dành cho giáo viên'),
-          installButton()))));
+          installButton())),
+      h('footer', { class: 'credit' },
+        h('span', { class: 'credit-ic' }, '👩‍🏫'),
+        h('div', {}, h('small', {}, 'Giáo viên tạo app'), h('b', {}, 'Lê Thị Kim Hoàn'), h('span', {}, 'Trường Tiểu học Huỳnh Ngọc Huệ')))));
 }
 
 // ---------------------------------------------------------------- Đăng nhập
@@ -212,6 +215,7 @@ export async function challenge(id) {
       const patch = {
         [`plays.${id}`]: (cur.plays?.[id] || 0) + 1,
         notebook: [...new Set([...(cur.notebook || []), ...rules])],
+        lastAt: Date.now(),
       };
       if (!cur.results?.[id]) patch[`results.${id}`] = result; // chỉ ghi nhận lần chơi đầu
       if (plan) patch.plan = plan;
@@ -265,7 +269,7 @@ export async function survey(kind) {
 
   async function save() {
     frame(spinner('Đang ghi nhận…'));
-    await store.updateStudent(s.classCode, s.sid, { [`results.${kind}`]: { answers, self, ms: Date.now() - started, at: Date.now() } });
+    await store.updateStudent(s.classCode, s.sid, { [`results.${kind}`]: { answers, self, ms: Date.now() - started, at: Date.now() }, lastAt: Date.now() });
     sound('win');
     if (kind === 'post') { location.hash = '#/graduate'; return; }
     confetti();

@@ -8,6 +8,18 @@ const pct = x => `${Math.round(x * 100)}%`;
 const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
 const safeShare = answers => answers?.length ? answers.filter(a => a.level === 3).length / answers.length : 0;
 
+// Tiến độ một học viên: số thử thách đã xong, tổng lượt chơi, lần chơi gần nhất
+export function progressOf(s) {
+  const R = s.results || {};
+  const done = CHALLENGES.filter(c => R[c.id]).length;
+  const plays = Object.values(s.plays || {}).reduce((a, n) => a + n, 0);
+  const steps = (R.pre ? 1 : 0) + done + (R.post ? 1 : 0);
+  const lastAt = s.lastAt || Math.max(0, ...Object.values(R).map(r => r?.at || 0)) || null;
+  return { done, plays, share: steps / (CHALLENGES.length + 2), lastAt };
+}
+const when = t => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '–';
+const progressCell = p => h('div', { class: 'prog' }, h('div', { class: 'mini-bar' }, h('span', { style: { width: pct(p.share) } })), h('small', {}, `${p.done}/${CHALLENGES.length} thử thách`));
+
 async function requireTeacher() {
   const t = await store.currentTeacher();
   if (!t) { location.hash = '#/teacher'; return null; }
@@ -20,6 +32,9 @@ export async function teacherHome() {
   const t = await store.currentTeacher();
   if (!t) return teacherLogin();
   const classes = await store.listClasses();
+  const roster = (await Promise.all(classes.map(async c => (await store.listStudents(c.code)).map(s => ({ s, c, p: progressOf(s) })))))
+    .flat().filter(x => x.s.profile || x.s.name)
+    .sort((a, b) => a.c.name.localeCompare(b.c.name, 'vi') || (a.s.name || a.s.code).localeCompare(b.s.name || b.s.code, 'vi'));
   const err = h('p', { class: 'error', hidden: true });
   const name = h('input', { placeholder: 'Ví dụ: 5A', maxlength: 12, required: true });
   const count = h('input', { type: 'number', min: 1, max: 50, value: 35, required: true });
@@ -43,6 +58,24 @@ export async function teacherHome() {
       classes.length ? h('div', { class: 'class-list' }, classes.map(c => h('a', { class: 'class-card', href: `#/teacher/class/${c.code}` },
         h('b', {}, `Lớp ${c.name}`), h('span', { class: 'code' }, c.code), h('small', {}, c.type === 'doichung' ? 'Đối chứng' : 'Thực nghiệm'))))
         : h('p', { class: 'muted' }, 'Chưa có lớp nào. Hãy tạo lớp đầu tiên.'),
+      h('h2', {}, '📈 Thống kê học viên'),
+      store.mode === 'local' && h('p', { class: 'muted' }, 'Số liệu của các học viên đã chơi trên máy này.'),
+      h('div', { class: 'kpis' },
+        kpi('Học viên', roster.length),
+        kpi('Tổng lượt chơi', roster.reduce((a, x) => a + x.p.plays, 0)),
+        kpi('Tiến độ trung bình', pct(mean(roster.map(x => x.p.share)))),
+        kpi('Đã tốt nghiệp', roster.filter(x => x.s.results?.post).length)),
+      roster.length ? h('div', { class: 'card scroll-x' }, h('table', { class: 'tbl' },
+        h('tr', {}, h('th', {}, 'Học viên'), h('th', {}, 'Lớp'), h('th', {}, 'Tiến độ'), h('th', {}, 'Lượt chơi'), h('th', {}, 'Nhập học'), h('th', {}, 'Tốt nghiệp'), h('th', {}, 'Chơi gần nhất')),
+        roster.map(({ s, c, p }) => h('tr', {},
+          h('td', {}, h('b', {}, s.name || s.code), s.profile && h('small', { class: 'muted' }, h('br'), nickname(s.profile))),
+          h('td', {}, h('a', { href: `#/teacher/class/${c.code}` }, c.name)),
+          h('td', {}, progressCell(p)),
+          h('td', {}, h('b', {}, p.plays)),
+          h('td', {}, s.results?.pre ? '✅' : '–'),
+          h('td', {}, s.results?.post ? '🎓' : '–'),
+          h('td', {}, when(p.lastAt))))))
+        : h('p', { class: 'muted' }, 'Chưa có học viên nào vào chơi.'),
       h('form', { class: 'card form', onsubmit: create },
         h('h3', {}, '➕ Tạo lớp mới'),
         h('label', {}, 'Tên lớp (không ghi tên trường)'), name,
@@ -98,13 +131,14 @@ export async function classView(code, tab = 'hocvien') {
 
 function tabStudents(cls, students) {
   return h('div', { class: 'card scroll-x' }, h('table', { class: 'tbl' },
-    h('tr', {}, h('th', {}, 'Mã'), h('th', {}, 'Biệt danh'), h('th', {}, 'Nhập học'), CHALLENGES.map(c => h('th', { title: c.title }, c.icon)), h('th', {}, 'Tốt nghiệp')),
-    students.map(s => h('tr', {},
+    h('tr', {}, h('th', {}, 'Học viên'), h('th', {}, 'Biệt danh'), h('th', {}, 'Tiến độ'), h('th', {}, 'Lượt chơi'), h('th', {}, 'Chơi gần nhất'), h('th', {}, 'Nhập học'), CHALLENGES.map(c => h('th', { title: c.title }, c.icon)), h('th', {}, 'Tốt nghiệp')),
+    students.map(s => { const p = progressOf(s); return h('tr', {},
       h('td', {}, h('b', {}, s.name || s.code)),
       h('td', {}, s.profile ? [avatarEl(s.profile, 'sm'), ' ', nickname(s.profile)] : h('span', { class: 'muted' }, 'Chưa vào')),
+      h('td', {}, progressCell(p)), h('td', {}, h('b', {}, p.plays)), h('td', {}, when(p.lastAt)),
       h('td', {}, s.results?.pre ? `✅ ${Math.round(safeShare(s.results.pre.answers) * 8)}/8` : '–'),
       CHALLENGES.map(c => h('td', {}, s.results?.[c.id] ? [shields(s.results[c.id].shields), h('br'), h('small', { class: 'muted' }, `${Math.round(s.results[c.id].ms / 60000)}′ · ${s.plays?.[c.id] || 1} lượt`)] : '–')),
-      h('td', {}, s.results?.post ? `🎓 ${Math.round(safeShare(s.results.post.answers) * 8)}/8` : '–')))));
+      h('td', {}, s.results?.post ? `🎓 ${Math.round(safeShare(s.results.post.answers) * 8)}/8` : '–')); })));
 }
 
 export function classStats(students) {
@@ -143,6 +177,7 @@ function tabStats(cls, students) {
   return h('div', {},
     h('div', { class: 'kpis' },
       kpi('Học viên đã vào', `${st.active.length}/${students.length}`),
+      kpi('Tổng lượt chơi', students.reduce((a, s) => a + progressOf(s).plays, 0)),
       kpi('Hoàn thành nhập học', `${st.nPre}`),
       kpi('Đã tốt nghiệp', `${st.nPost}`),
       kpi('Chọn an toàn (trước → sau)', `${pct(st.preSafe)} → ${st.nPost ? pct(st.postSafe) : '…'}`),
@@ -163,13 +198,14 @@ function tabStats(cls, students) {
 const kpi = (label, val) => h('div', { class: 'kpi' }, h('b', {}, val), h('small', {}, label));
 
 function exportCSV(cls, students) {
-  const head = ['Mã HS', 'Biệt danh', 'Nhập học: số lần an toàn /8', 'Tốt nghiệp: số lần an toàn /8', 'Tự tin trước (1-4)', 'Tự tin sau (1-4)',
+  const head = ['Mã HS', 'Họ tên', 'Biệt danh', 'Số thử thách đã xong', 'Tổng lượt chơi','Nhập học: số lần an toàn /8', 'Tốt nghiệp: số lần an toàn /8', 'Tự tin trước (1-4)', 'Tự tin sau (1-4)',
     ...CHALLENGES.flatMap(c => [`TT${c.no} khiên`, `TT${c.no} % an toàn lần đầu`, `TT${c.no} phút`, `TT${c.no} lượt chơi`]),
     ...TOPICS.map((t, i) => `Trước: ${t}`), ...TOPICS.map(t => `Sau: ${t}`)];
   const rows = students.map(s => {
     const R = s.results || {};
     const lv = (kind, t) => R[kind]?.answers?.find(a => a.t === t)?.level ?? '';
-    return [s.code, s.profile ? nickname(s.profile) : '',
+    const p = progressOf(s);
+    return [s.code, s.name || '', s.profile ? nickname(s.profile) : '', p.done, p.plays,
       R.pre ? Math.round(safeShare(R.pre.answers) * 8) : '', R.post ? Math.round(safeShare(R.post.answers) * 8) : '',
       R.pre ? mean(R.pre.self).toFixed(2) : '', R.post ? mean(R.post.self).toFixed(2) : '',
       ...CHALLENGES.flatMap(c => R[c.id] ? [R[c.id].shields, Math.round(R[c.id].safeRate * 100), (R[c.id].ms / 60000).toFixed(1), s.plays?.[c.id] || 1] : ['', '', '', '']),

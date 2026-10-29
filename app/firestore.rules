@@ -9,7 +9,7 @@ service cloud.firestore {
     function ownsClass(code) { return signedIn() && get(/databases/$(db)/documents/classes/$(code)).data.teacherUid == request.auth.uid; }
     // Học sinh chỉ được sửa các trường của chính hồ sơ học viên
     function studentFieldsOnly() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profile', 'results', 'plays', 'notebook', 'plan']);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['profile', 'results', 'plays', 'notebook', 'plan', 'lastAt']);
     }
 
     match /classes/{code} {

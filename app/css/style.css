@@ -170,6 +170,11 @@ input[type=checkbox] { width: 26px; min-height: 26px; height: 26px; accent-color
 .menu-tx small { color: var(--muted); font-weight: 600; }
 .menu-go { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: #fff; font-size: .9rem; }
 .menu-small { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+.credit { display: inline-flex; align-items: center; gap: 12px; margin: 22px auto 10px; padding: 10px 20px 10px 12px; text-align: left; background: rgba(255, 255, 255, .92); border-radius: 22px; box-shadow: var(--pop); border-left: 8px solid #FFD166; }
+.credit-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-size: 30px; background: #FFF3CC; flex: none; }
+.credit small { display: block; color: var(--muted); font-weight: 700; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+.credit b { display: block; color: var(--brand); font-size: 1.2rem; line-height: 1.2; }
+.credit span:last-child { display: block; font-weight: 700; font-size: .95rem; }
 .mode-note { font-size: .9rem; color: var(--muted); background: rgba(255, 255, 255, .85); border-radius: 14px; padding: 8px 14px; display: inline-block; }
 
 /* ================= Ảnh đại diện, chọn nhân vật ================= */
@@ -478,6 +483,7 @@ textarea { min-height: 90px; resize: vertical; }
 .mini-bar span { display: block; height: 100%; background: var(--mint); }
 .mini-bar.pre span { background: #A0A3C4; } .mini-bar.post span { background: var(--brand); }
 .mini-bar + .mini-bar { margin-top: 4px; }
+.prog { min-width: 130px; } .prog small { display: block; color: var(--muted); font-size: .8rem; }
 .legend { display: flex; gap: 16px; margin-bottom: 6px; }
 .legend .lg::before { content: ''; display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; }
 .legend .lg.pre::before { background: #A0A3C4; } .legend .lg.post::before { background: var(--brand); }
